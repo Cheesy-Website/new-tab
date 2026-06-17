@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New Tab</title>
-    <link rel="stylesheet" href="style.css">
+    <title>temp</title>
 </head>
 <body>
 
@@ -40,7 +39,33 @@
 
     <!-- Toggle Controls -->
 
+    <button class="customizer-btn" id="customizerBtn">⚙️ Customize</button>
 
+    <div class="customizer-panel" id="panel">
+        <div class="panel-section">
+            <h3>Visual Colors</h3>
+            <div class="control-group">
+                <label>Text Color</label>
+                <input type="color" id="textColorPicker">
+            </div>
+            <div class="control-group">
+                <label>Accent Focus</label>
+                <input type="color" id="accentColorPicker">
+            </div>
+            <div class="control-group">
+                <label>Logo Color</label>
+                <input type="color" id="logoColorPicker">
+            </div>
+        </div>
+
+        <div class="panel-section">
+            <h3>Animated Background (.gif)</h3>
+            <label class="file-label" for="gif-upload">Upload GIF or Image</label>
+            <input type="file" id="gif-upload" accept="image/gif, image/png, image/jpeg, image/webp">
+        </div>
+
+        <button class="reset-btn" id="resetBtn">Reset to Defaults</button>
+    </div>
     <!-- Link to external modular logic -->
     <script src="script.js"></script>
 </body>
