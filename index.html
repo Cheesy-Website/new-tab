@@ -8,66 +8,58 @@
 </head>
 <body>
 
-    <!-- Main Content Container -->
     <div class="main-container">
-        <!-- Minimalistic Stylized Logo -->
         <div class="logo" id="ui-logo">New Tab Remake</div>
 
-        <!-- Google Search Processing -->
         <form class="search-form" action="https://google.com" method="get">
             <div class="search-box">
-                <input type="text" name="q" placeholder="" autocomplete="off" autofocus>
+                <input type="text" name="q" placeholder="Look up academic data..." autocomplete="off" autofocus>
             </div>
         </form>
-        
 
-        <!-- Dynamic Target Grid Shortcuts -->
-        <div class="shortcuts-grid">
-            <a href="https://github.com" class="shortcut-item">
-                <div class="shortcut-tile">🐙</div>
-                <div class="shortcut-title">GitHub</div>
-            </a>
-            <a href="https://youtube.com" class="shortcut-item">
-                <div class="shortcut-tile">📺</div>
-                <div class="shortcut-title">YouTube</div>
-            </a>
-            <a href="https://gmail.com" class="shortcut-item">
-                <div class="shortcut-tile">✉️</div>
-                <div class="shortcut-title">Gmail</div>
-            </a>
-        </div>
+        <!-- The grid is now empty; JavaScript builds this dynamically -->
+        <div class="shortcuts-grid" id="shortcutsGrid"></div>
     </div>
 
-    <!-- Toggle Controls -->
-
-    <button class="customizer-btn" id="customizerBtn">⚙️ Customize</button>
+    <button class="customizer-btn" id="customizerBtn">🎨 Theme & Tiles</button>
 
     <div class="customizer-panel" id="panel">
         <div class="panel-section">
+            <h3>Add New Tile</h3>
+            <div class="control-group">
+                <input type="text" id="tileName" placeholder="Site Name (e.g. Drive)" style="width:100%; padding:6px; margin-bottom:8px; border-radius:4px; border:1px solid #444; background:#222; color:#fff;">
+            </div>
+            <div class="control-group">
+                <input type="text" id="tileUrl" placeholder="URL (https://...)" style="width:100%; padding:6px; margin-bottom:8px; border-radius:4px; border:1px solid #444; background:#222; color:#fff;">
+            </div>
+            <button class="file-label" id="addTileBtn" style="border:none; width:100%;">Add Shortcut</button>
+        </div>
+
+        <div class="panel-section">
             <h3>Visual Colors</h3>
             <div class="control-group">
-                <label>Text Color</label>
+                <label>Main Text</label>
                 <input type="color" id="textColorPicker">
             </div>
             <div class="control-group">
-                <label>Accent Focus</label>
+                <label>Border Accent</label>
                 <input type="color" id="accentColorPicker">
             </div>
             <div class="control-group">
-                <label>Logo Color</label>
+                <label>Header Text</label>
                 <input type="color" id="logoColorPicker">
             </div>
         </div>
 
         <div class="panel-section">
-            <h3>Animated Background (.gif)</h3>
-            <label class="file-label" for="gif-upload">Upload GIF or Image</label>
+            <h3>Visual Style</h3>
+            <label class="file-label" for="gif-upload">Set Background Graphic</label>
             <input type="file" id="gif-upload" accept="image/gif, image/png, image/jpeg, image/webp">
         </div>
 
-        <button class="reset-btn" id="resetBtn">Reset to Defaults</button>
+        <button class="reset-btn" id="resetBtn">Clear Settings</button>
     </div>
-    <!-- Link to external modular logic -->
+
     <script src="script.js"></script>
 </body>
 </html>
