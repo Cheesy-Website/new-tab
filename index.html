@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New Tab Remake</title>
+    <title>Workspace Portal</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <div class="main-container">
-        <div class="logo" id="ui-logo">New Tab Remake</div>
+        <div class="logo" id="ui-logo">Workspace</div>
 
         <form class="search-form" action="https://google.com" method="get">
             <div class="search-box">
@@ -17,7 +17,6 @@
             </div>
         </form>
 
-        <!-- The grid is now empty; JavaScript builds this dynamically -->
         <div class="shortcuts-grid" id="shortcutsGrid"></div>
     </div>
 
@@ -51,10 +50,13 @@
             </div>
         </div>
 
+        <!-- NEW BACKGROUND LINK SECTION -->
         <div class="panel-section">
-            <h3>Visual Style</h3>
-            <label class="file-label" for="gif-upload">Set Background Graphic</label>
-            <input type="file" id="gif-upload" accept="image/gif, image/png, image/jpeg, image/webp">
+            <h3>Visual Style (.gif URL)</h3>
+            <div class="control-group">
+                <input type="text" id="bgUrlInput" placeholder="Paste .gif or image web link..." style="width:100%; padding:6px; margin-bottom:8px; border-radius:4px; border:1px solid #444; background:#222; color:#fff;">
+            </div>
+            <button class="file-label" id="saveBgBtn" style="border:none; width:100%;">Apply Background</button>
         </div>
 
         <button class="reset-btn" id="resetBtn">Clear Settings</button>
