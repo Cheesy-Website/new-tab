@@ -109,10 +109,10 @@ function handleFileUpload(e) {
             applyBackgroundSource(file);
             bgUrlInput.value = '';
             bgFileInput.value = ''; 
-            showBgMessage('75MB Custom GIF saved permanently!', '#2ecc71');
+            showBgMessage('Background changed successfully.', '#2ecc71');
             setTimeout(() => { bgMessage.textContent = ''; }, 5000);
         } else {
-            showBgMessage('Database storage write failed.', '#ff4d4d');
+            showBgMessage('Failed to change background.', '#ff4d4d');
         }
     });
 }
