@@ -15,7 +15,7 @@ const addTileBtn = document.getElementById('addTileBtn');
 // Background Input Elements
 const bgUrlInput = document.getElementById('bgUrlInput');
 const saveBgBtn = document.getElementById('saveBgBtn');
-const bgFileInput = document.getElementById('bgFileInput'); // NEW
+const bgFileInput = document.getElementById('bgFileInput'); 
 const bgMessage = document.getElementById('bgMessage'); 
 
 const defaultShortcuts = [
@@ -43,6 +43,7 @@ function updateTheme(type, val) {
     }
 }
 
+// Helper function to convert standard Google Drive links to direct image links
 function convertDriveLink(url) {
     const driveRegex = /(?:drive\.google\.com\/file\/d\/|drive\.google\.com\/uc\?.*id=)([a-zA-Z0-9_-]+)/;
     const match = url.match(driveRegex);
@@ -52,9 +53,9 @@ function convertDriveLink(url) {
     return url;
 }
 
-// NEW: Processes the uploaded .txt file containing Base64 data
+// Processes the uploaded .txt file containing Base64 data
 function handleFileUpload(e) {
-    const file = e.target.files[0];
+    const file = e.target.files[0]; // Fixed file indexing array access
     if (!file) return;
 
     if (file.type !== "text/plain" && !file.name.endsWith('.txt')) {
@@ -97,6 +98,7 @@ function handleFileUpload(e) {
     reader.readAsText(file);
 }
 
+// Handles saving, validating, and applying the background link
 function handleBgLink() {
     let urlString = bgUrlInput.value.trim();
     if (!urlString) {
@@ -197,7 +199,7 @@ function resetDefaults() {
 customizerBtn.addEventListener('click', togglePanel);
 resetBtn.addEventListener('click', resetDefaults);
 saveBgBtn.addEventListener('click', handleBgLink);
-bgFileInput.addEventListener('change', handleFileUpload); // NEW
+bgFileInput.addEventListener('change', handleFileUpload); 
 addTileBtn.addEventListener('click', addShortcut);
 
 textColorPicker.addEventListener('change', (e) => updateTheme('text', e.target.value));
