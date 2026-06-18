@@ -65,28 +65,39 @@ function handleBgLink() {
     // Convert link if it matches Google Drive patterns
     urlString = convertDriveLink(urlString);
 
+    // Google Drive blocks programmatic JavaScript testing (CORS).
+    // If it's a Drive link, skip the tester and apply it directly.
+    if (urlString.includes('://google.com')) {
+        document.body.style.backgroundImage = `url('${urlString}')`;
+        localStorage.setItem('style_canvas', urlString);
+        bgUrlInput.value = ''; // Clear input field
+        
+        bgMessage.style.color = '#2ecc71';
+        bgMessage.textContent = 'Google Drive background applied!';
+        setTimeout(() => { bgMessage.textContent = ''; }, 3000);
+        return;
+    }
+
+    // Standard verification for all other normal image URLs
     bgMessage.style.color = '#e67e22';
     bgMessage.textContent = 'Testing link...';
 
-    // Validate the image by attempting to load it in memory
     const imgTester = new Image();
     imgTester.src = urlString;
 
     imgTester.onload = function() {
         document.body.style.backgroundImage = `url('${urlString}')`;
         localStorage.setItem('style_canvas', urlString);
-        bgUrlInput.value = ''; // Clear input field
+        bgUrlInput.value = ''; 
         
         bgMessage.style.color = '#2ecc71';
         bgMessage.textContent = 'Background updated successfully!';
-        
-        // Clear success message after 3 seconds
         setTimeout(() => { bgMessage.textContent = ''; }, 3000);
     };
 
     imgTester.onerror = function() {
         bgMessage.style.color = '#ff4d4d';
-        bgMessage.textContent = 'Failed to load image. Ensure it is a valid image URL and shared publicly.';
+        bgMessage.textContent = 'Failed to load image. Ensure it is a valid web link.';
     };
 }
 
