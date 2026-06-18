@@ -24,6 +24,44 @@ const defaultShortcuts = [
     { name: "Wiki", url: "https://wikipedia.org" }
 ];
 
+// INDEXEDDB SETUP: For storing backgrounds up to hundreds of megabytes safely
+const dbName = "WorkspacePortalDB";
+const storeName = "BackgroundStore";
+let db;
+
+const dbRequest = indexedDB.open(dbName, 1);
+dbRequest.onupgradeneeded = function(e) {
+    let database = e.target.result;
+    if (!database.objectStoreNames.contains(storeName)) {
+        database.createObjectStore(storeName);
+    }
+};
+dbRequest.onsuccess = function(e) {
+    db = e.target.result;
+    loadSavedBackground(); // Load the large image only when DB is fully ready
+};
+
+function saveBackgroundToDB(base64Data, callback) {
+    if (!db) return;
+    const transaction = db.transaction([storeName], "readwrite");
+    const store = transaction.objectStore(storeName);
+    const request = store.put(base64Data, "currentBackground");
+    request.onsuccess = () => callback(true);
+    request.onerror = () => callback(false);
+}
+
+function loadSavedBackground() {
+    if (!db) return;
+    const transaction = db.transaction([storeName], "readonly");
+    const store = transaction.objectStore(storeName);
+    const request = store.get("currentBackground");
+    request.onsuccess = function() {
+        if (request.result) {
+            document.body.style.backgroundImage = `url('${request.result}')`;
+        }
+    };
+}
+
 function togglePanel() {
     panel.classList.toggle('open');
 }
@@ -43,7 +81,6 @@ function updateTheme(type, val) {
     }
 }
 
-// Helper function to convert standard Google Drive links to direct image links
 function convertDriveLink(url) {
     const driveRegex = /(?:drive\.google\.com\/file\/d\/|drive\.google\.com\/uc\?.*id=)([a-zA-Z0-9_-]+)/;
     const match = url.match(driveRegex);
@@ -53,52 +90,47 @@ function convertDriveLink(url) {
     return url;
 }
 
-// Processes the uploaded .txt file containing Base64 data
+// Processes the uploaded .txt file containing large Base64 data
 function handleFileUpload(e) {
-    const file = e.target.files[0]; // Fixed file indexing array access
+    const file = e.target.files[0];
     if (!file) return;
 
-    if (file.type !== "text/plain" && !file.name.endsWith('.txt')) {
-        showBgMessage('Please upload a valid .txt file.', '#ff4d4d');
-        return;
-    }
-
-    showBgMessage('Reading Base64 file...', '#e67e22');
+    showBgMessage('Reading massive Base64 file... Please wait.', '#e67e22');
 
     const reader = new FileReader();
     reader.onload = function(evt) {
         let base64String = evt.target.result.trim();
 
-        // Automatically wrap raw base64 string with image header if missing
+        // Strip literal quotes if exported incorrectly inside the txt file
+        if (base64String.startsWith('"') && base64String.endsWith('"')) {
+            base64String = base64String.slice(1, -1);
+        }
+
+        // Add correct mime prefix if file contains raw data strings
         if (!base64String.startsWith('data:image')) {
             base64String = `data:image/png;base64,${base64String}`;
         }
 
-        const testImage = new Image();
-        testImage.src = base64String;
+        showBgMessage('Processing 100MB canvas asset details...', '#e67e22');
 
-        testImage.onload = function() {
-            try {
-                document.body.style.backgroundImage = `url('${base64String}')`;
-                localStorage.setItem('style_canvas', base64String); // Saved on its own
+        // Render directly to UI and save to IndexedDB block bypassing 5MB limit
+        document.body.style.backgroundImage = `url('${base64String}')`;
+        
+        saveBackgroundToDB(base64String, (success) => {
+            if (success) {
                 bgUrlInput.value = '';
                 bgFileInput.value = ''; 
-                showBgMessage('Base64 background applied!', '#2ecc71');
-                setTimeout(() => { bgMessage.textContent = ''; }, 4000);
-            } catch (error) {
-                showBgMessage('Storage failed. File exceeds browser 5MB limit.', '#ff4d4d');
+                showBgMessage('100MB Background saved and applied successfully!', '#2ecc71');
+                setTimeout(() => { bgMessage.textContent = ''; }, 5000);
+            } else {
+                showBgMessage('Database write failed.', '#ff4d4d');
             }
-        };
-
-        testImage.onerror = function() {
-            showBgMessage('Invalid image data inside .txt file.', '#ff4d4d');
-        };
+        });
     };
 
     reader.readAsText(file);
 }
 
-// Handles saving, validating, and applying the background link
 function handleBgLink() {
     let urlString = bgUrlInput.value.trim();
     if (!urlString) {
@@ -113,16 +145,15 @@ function handleBgLink() {
     loaderImage.src = urlString;
 
     loaderImage.onload = function() {
-        try {
-            document.body.style.backgroundImage = `url('${urlString}')`;
-            localStorage.setItem('style_canvas', urlString);
-            bgUrlInput.value = ''; 
-            bgFileInput.value = '';
-            showBgMessage('Background rendered successfully!', '#2ecc71');
-            setTimeout(() => { bgMessage.textContent = ''; }, 4000);
-        } catch(e) {
-            showBgMessage('Storage failed. URL path is too long.', '#ff4d4d');
-        }
+        document.body.style.backgroundImage = `url('${urlString}')`;
+        saveBackgroundToDB(urlString, (success) => {
+            if (success) {
+                bgUrlInput.value = ''; 
+                bgFileInput.value = '';
+                showBgMessage('Background path saved successfully!', '#2ecc71');
+                setTimeout(() => { bgMessage.textContent = ''; }, 4000);
+            }
+        });
     };
 
     loaderImage.onerror = function() {
@@ -192,6 +223,10 @@ function removeShortcut(index) {
 
 function resetDefaults() {
     localStorage.clear();
+    if (db) {
+        const transaction = db.transaction([storeName], "readwrite");
+        transaction.objectStore(storeName).clear();
+    }
     location.reload();
 }
 
@@ -210,7 +245,6 @@ window.addEventListener('DOMContentLoaded', () => {
     const savedText = localStorage.getItem('style_mainText') || '#ffffff';
     const savedAccent = localStorage.getItem('style_accentTint') || '#4285f4';
     const savedLogo = localStorage.getItem('style_headerTint') || '#ffffff';
-    const savedBg = localStorage.getItem('style_canvas');
 
     updateTheme('text', savedText);
     updateTheme('accent', savedAccent);
@@ -219,10 +253,6 @@ window.addEventListener('DOMContentLoaded', () => {
     textColorPicker.value = savedText;
     accentColorPicker.value = savedAccent;
     logoColorPicker.value = savedLogo;
-
-    if (savedBg) {
-        document.body.style.backgroundImage = `url('${savedBg}')`;
-    }
 
     renderShortcuts();
 });
