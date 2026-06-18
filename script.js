@@ -18,13 +18,15 @@ const saveBgBtn = document.getElementById('saveBgBtn');
 const bgFileInput = document.getElementById('bgFileInput'); 
 const bgMessage = document.getElementById('bgMessage'); 
 
+let activeBlobUrl = null;
+
 const defaultShortcuts = [
     { name: "Drive", url: "https://google.com" },
     { name: "Classes", url: "https://google.com" },
     { name: "Wiki", url: "https://wikipedia.org" }
 ];
 
-// INDEXEDDB SETUP: For storing backgrounds up to hundreds of megabytes safely
+// INDEXEDDB CONFIG: Built to support 75MB+ GIF image storage
 const dbName = "WorkspacePortalDB";
 const storeName = "BackgroundStore";
 let db;
@@ -38,14 +40,14 @@ dbRequest.onupgradeneeded = function(e) {
 };
 dbRequest.onsuccess = function(e) {
     db = e.target.result;
-    loadSavedBackground(); // Load the large image only when DB is fully ready
+    loadSavedBackground(); 
 };
 
-function saveBackgroundToDB(base64Data, callback) {
+function saveBackgroundToDB(dataPayload, callback) {
     if (!db) return;
     const transaction = db.transaction([storeName], "readwrite");
     const store = transaction.objectStore(storeName);
-    const request = store.put(base64Data, "currentBackground");
+    const request = store.put(dataPayload, "currentBackground");
     request.onsuccess = () => callback(true);
     request.onerror = () => callback(false);
 }
@@ -57,9 +59,24 @@ function loadSavedBackground() {
     const request = store.get("currentBackground");
     request.onsuccess = function() {
         if (request.result) {
-            document.body.style.backgroundImage = `url('${request.result}')`;
+            applyBackgroundSource(request.result);
         }
     };
+}
+
+function applyBackgroundSource(source) {
+    // Clear old data layers to free up memory
+    if (activeBlobUrl) {
+        URL.revokeObjectURL(activeBlobUrl);
+        activeBlobUrl = null;
+    }
+
+    if (source instanceof Blob || source instanceof File) {
+        activeBlobUrl = URL.createObjectURL(source);
+        document.body.style.backgroundImage = `url('${activeBlobUrl}')`;
+    } else {
+        document.body.style.backgroundImage = `url('${source}')`;
+    }
 }
 
 function togglePanel() {
@@ -90,45 +107,24 @@ function convertDriveLink(url) {
     return url;
 }
 
-// Processes the uploaded .txt file containing large Base64 data
+// Processes large binary .gif image file directly
 function handleFileUpload(e) {
     const file = e.target.files[0];
     if (!file) return;
 
-    showBgMessage('Reading massive Base64 file... Please wait.', '#e67e22');
+    showBgMessage('Storing 75MB GIF to Local Database... Please stay on the page.', '#e67e22');
 
-    const reader = new FileReader();
-    reader.onload = function(evt) {
-        let base64String = evt.target.result.trim();
-
-        // Strip literal quotes if exported incorrectly inside the txt file
-        if (base64String.startsWith('"') && base64String.endsWith('"')) {
-            base64String = base64String.slice(1, -1);
+    saveBackgroundToDB(file, (success) => {
+        if (success) {
+            applyBackgroundSource(file);
+            bgUrlInput.value = '';
+            bgFileInput.value = ''; 
+            showBgMessage('75MB Custom GIF saved permanently!', '#2ecc71');
+            setTimeout(() => { bgMessage.textContent = ''; }, 5000);
+        } else {
+            showBgMessage('Database storage write failed.', '#ff4d4d');
         }
-
-        // Add correct mime prefix if file contains raw data strings
-        if (!base64String.startsWith('data:image')) {
-            base64String = `data:image/png;base64,${base64String}`;
-        }
-
-        showBgMessage('Processing 100MB canvas asset details...', '#e67e22');
-
-        // Render directly to UI and save to IndexedDB block bypassing 5MB limit
-        document.body.style.backgroundImage = `url('${base64String}')`;
-        
-        saveBackgroundToDB(base64String, (success) => {
-            if (success) {
-                bgUrlInput.value = '';
-                bgFileInput.value = ''; 
-                showBgMessage('100MB Background saved and applied successfully!', '#2ecc71');
-                setTimeout(() => { bgMessage.textContent = ''; }, 5000);
-            } else {
-                showBgMessage('Database write failed.', '#ff4d4d');
-            }
-        });
-    };
-
-    reader.readAsText(file);
+    });
 }
 
 function handleBgLink() {
@@ -139,25 +135,25 @@ function handleBgLink() {
     }
 
     urlString = convertDriveLink(urlString);
-    showBgMessage('Downloading background file... Please wait.', '#e67e22');
+    showBgMessage('Downloading background path asset...', '#e67e22');
 
     const loaderImage = new Image();
     loaderImage.src = urlString;
 
     loaderImage.onload = function() {
-        document.body.style.backgroundImage = `url('${urlString}')`;
+        applyBackgroundSource(urlString);
         saveBackgroundToDB(urlString, (success) => {
             if (success) {
                 bgUrlInput.value = ''; 
                 bgFileInput.value = '';
-                showBgMessage('Background path saved successfully!', '#2ecc71');
+                showBgMessage('Background URL mapped and saved successfully!', '#2ecc71');
                 setTimeout(() => { bgMessage.textContent = ''; }, 4000);
             }
         });
     };
 
     loaderImage.onerror = function() {
-        showBgMessage('Failed to load image. Ensure link is public.', '#ff4d4d');
+        showBgMessage('Failed to download image link. Check connection properties.', '#ff4d4d');
     };
 }
 
