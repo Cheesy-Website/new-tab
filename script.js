@@ -13,14 +13,11 @@ const tileUrlInput = document.getElementById('tileUrl');
 const addTileBtn = document.getElementById('addTileBtn');
 
 // Background Input Elements
-const bgUrlInput = document.getElementById('bgUrlInput');
-const saveBgBtn = document.getElementById('saveBgBtn');
 const bgFileInput = document.getElementById('bgFileInput'); 
 const bgMessage = document.getElementById('bgMessage'); 
 
 let activeBlobUrl = null;
 
-// REMOVED: Google Drive default shortcut removed
 const defaultShortcuts = [
     { name: "Classes", url: "https://google.com" },
     { name: "Wiki", url: "https://wikipedia.org" }
@@ -107,43 +104,13 @@ function handleFileUpload(e) {
     saveBackgroundToDB(file, (success) => {
         if (success) {
             applyBackgroundSource(file);
-            bgUrlInput.value = '';
             bgFileInput.value = ''; 
-            showBgMessage('Background changed successfully.', '#2ecc71');
+            showBgMessage('75MB Custom GIF saved permanently!', '#2ecc71');
             setTimeout(() => { bgMessage.textContent = ''; }, 5000);
         } else {
-            showBgMessage('Failed to change background.', '#ff4d4d');
+            showBgMessage('Database storage write failed.', '#ff4d4d');
         }
     });
-}
-
-function handleBgLink() {
-    let urlString = bgUrlInput.value.trim();
-    if (!urlString) {
-        showBgMessage('Please enter a URL first.', '#ff4d4d');
-        return;
-    }
-
-    showBgMessage('Downloading background path asset...', '#e67e22');
-
-    const loaderImage = new Image();
-    loaderImage.src = urlString;
-
-    loaderImage.onload = function() {
-        applyBackgroundSource(urlString);
-        saveBackgroundToDB(urlString, (success) => {
-            if (success) {
-                bgUrlInput.value = ''; 
-                bgFileInput.value = '';
-                showBgMessage('Background URL mapped and saved successfully!', '#2ecc71');
-                setTimeout(() => { bgMessage.textContent = ''; }, 4000);
-            }
-        });
-    };
-
-    loaderImage.onerror = function() {
-        showBgMessage('Failed to download image link. Check connection properties.', '#ff4d4d');
-    };
 }
 
 function showBgMessage(text, color) {
@@ -218,7 +185,6 @@ function resetDefaults() {
 // Event Bindings
 customizerBtn.addEventListener('click', togglePanel);
 resetBtn.addEventListener('click', resetDefaults);
-saveBgBtn.addEventListener('click', handleBgLink);
 bgFileInput.addEventListener('change', handleFileUpload); 
 addTileBtn.addEventListener('click', addShortcut);
 
