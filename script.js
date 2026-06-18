@@ -15,6 +15,7 @@ const addTileBtn = document.getElementById('addTileBtn');
 // Background Link Elements
 const bgUrlInput = document.getElementById('bgUrlInput');
 const saveBgBtn = document.getElementById('saveBgBtn');
+const bgMessage = document.getElementById('bgMessage'); // New feedback container
 
 const defaultShortcuts = [
     { name: "Drive", url: "https://google.com" },
@@ -43,27 +44,50 @@ function updateTheme(type, val) {
 
 // Helper function to convert standard Google Drive links to direct image links
 function convertDriveLink(url) {
-    // Matches the file ID from standard /file/d/ID/view or direct /uc?id=ID links
     const driveRegex = /(?:drive\.google\.com\/file\/d\/|drive\.google\.com\/uc\?.*id=)([a-zA-Z0-9_-]+)/;
     const match = url.match(driveRegex);
     
     if (match && match[1]) {
         return `https://google.com{match[1]}`;
     }
-    return url; // Return original URL if it's not a Google Drive link
+    return url;
 }
 
-// Handles saving and applying the background link
+// Handles saving, validating, and applying the background link
 function handleBgLink() {
     let urlString = bgUrlInput.value.trim();
-    if (urlString) {
-        // Automatically check and convert the URL if it's from Google Drive
-        urlString = convertDriveLink(urlString);
+    if (!urlString) {
+        bgMessage.style.color = '#ff4d4d';
+        bgMessage.textContent = 'Please enter a URL first.';
+        return;
+    }
 
+    // Convert link if it matches Google Drive patterns
+    urlString = convertDriveLink(urlString);
+
+    bgMessage.style.color = '#e67e22';
+    bgMessage.textContent = 'Testing link...';
+
+    // Validate the image by attempting to load it in memory
+    const imgTester = new Image();
+    imgTester.src = urlString;
+
+    imgTester.onload = function() {
         document.body.style.backgroundImage = `url('${urlString}')`;
         localStorage.setItem('style_canvas', urlString);
-        bgUrlInput.value = ''; // Clear the input field
-    }
+        bgUrlInput.value = ''; // Clear input field
+        
+        bgMessage.style.color = '#2ecc71';
+        bgMessage.textContent = 'Background updated successfully!';
+        
+        // Clear success message after 3 seconds
+        setTimeout(() => { bgMessage.textContent = ''; }, 3000);
+    };
+
+    imgTester.onerror = function() {
+        bgMessage.style.color = '#ff4d4d';
+        bgMessage.textContent = 'Failed to load image. Ensure it is a valid image URL and shared publicly.';
+    };
 }
 
 function renderShortcuts() {
