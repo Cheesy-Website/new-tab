@@ -41,10 +41,25 @@ function updateTheme(type, val) {
     }
 }
 
+// Helper function to convert standard Google Drive links to direct image links
+function convertDriveLink(url) {
+    // Matches the file ID from standard /file/d/ID/view or direct /uc?id=ID links
+    const driveRegex = /(?:drive\.google\.com\/file\/d\/|drive\.google\.com\/uc\?.*id=)([a-zA-Z0-9_-]+)/;
+    const match = url.match(driveRegex);
+    
+    if (match && match[1]) {
+        return `https://google.com{match[1]}`;
+    }
+    return url; // Return original URL if it's not a Google Drive link
+}
+
 // Handles saving and applying the background link
 function handleBgLink() {
-    const urlString = bgUrlInput.value.trim();
+    let urlString = bgUrlInput.value.trim();
     if (urlString) {
+        // Automatically check and convert the URL if it's from Google Drive
+        urlString = convertDriveLink(urlString);
+
         document.body.style.backgroundImage = `url('${urlString}')`;
         localStorage.setItem('style_canvas', urlString);
         bgUrlInput.value = ''; // Clear the input field
