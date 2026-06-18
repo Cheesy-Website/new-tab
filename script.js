@@ -19,7 +19,7 @@ const bgMessage = document.getElementById('bgMessage');
 let activeBlobUrl = null;
 
 const defaultShortcuts = [
-    { name: "Classes", url: "https://google.com" },
+    { name: "GitHub", url: "https://github.com" },
     { name: "Wiki", url: "https://wikipedia.org" }
 ];
 
@@ -99,16 +99,16 @@ function handleFileUpload(e) {
     const file = e.target.files[0];
     if (!file) return;
 
-    showBgMessage('Storing 75MB GIF to Local Database... Please stay on the page.', '#e67e22');
+    showBgMessage('Setting Custom Background... Please stay on the page.', '#e67e22');
 
     saveBackgroundToDB(file, (success) => {
         if (success) {
             applyBackgroundSource(file);
             bgFileInput.value = ''; 
-            showBgMessage('75MB Custom GIF saved permanently!', '#2ecc71');
+            showBgMessage('Custom Background saved successfully', '#2ecc71');
             setTimeout(() => { bgMessage.textContent = ''; }, 5000);
         } else {
-            showBgMessage('Database storage write failed.', '#ff4d4d');
+            showBgMessage('Failed to save Custom Background.', '#ff4d4d');
         }
     });
 }
