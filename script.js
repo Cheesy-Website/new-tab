@@ -20,8 +20,8 @@ const bgMessage = document.getElementById('bgMessage');
 
 let activeBlobUrl = null;
 
+// REMOVED: Google Drive default shortcut removed
 const defaultShortcuts = [
-    { name: "Drive", url: "https://google.com" },
     { name: "Classes", url: "https://google.com" },
     { name: "Wiki", url: "https://wikipedia.org" }
 ];
@@ -65,7 +65,6 @@ function loadSavedBackground() {
 }
 
 function applyBackgroundSource(source) {
-    // Clear old data layers to free up memory
     if (activeBlobUrl) {
         URL.revokeObjectURL(activeBlobUrl);
         activeBlobUrl = null;
@@ -98,15 +97,6 @@ function updateTheme(type, val) {
     }
 }
 
-function convertDriveLink(url) {
-    const driveRegex = /(?:drive\.google\.com\/file\/d\/|drive\.google\.com\/uc\?.*id=)([a-zA-Z0-9_-]+)/;
-    const match = url.match(driveRegex);
-    if (match && match[1]) {
-        return `https://google.com{match[1]}&confirm=t`;
-    }
-    return url;
-}
-
 // Processes large binary .gif image file directly
 function handleFileUpload(e) {
     const file = e.target.files[0];
@@ -134,7 +124,6 @@ function handleBgLink() {
         return;
     }
 
-    urlString = convertDriveLink(urlString);
     showBgMessage('Downloading background path asset...', '#e67e22');
 
     const loaderImage = new Image();
