@@ -12,9 +12,10 @@ const tileNameInput = document.getElementById('tileName');
 const tileUrlInput = document.getElementById('tileUrl');
 const addTileBtn = document.getElementById('addTileBtn');
 
-// Background Link Elements
+// Background Input Elements
 const bgUrlInput = document.getElementById('bgUrlInput');
 const saveBgBtn = document.getElementById('saveBgBtn');
+const bgFileInput = document.getElementById('bgFileInput'); // NEW
 const bgMessage = document.getElementById('bgMessage'); 
 
 const defaultShortcuts = [
@@ -42,53 +43,94 @@ function updateTheme(type, val) {
     }
 }
 
-// Helper function to convert standard Google Drive links to direct image links
 function convertDriveLink(url) {
     const driveRegex = /(?:drive\.google\.com\/file\/d\/|drive\.google\.com\/uc\?.*id=)([a-zA-Z0-9_-]+)/;
     const match = url.match(driveRegex);
-    
     if (match && match[1]) {
-        // FIX: Added "&confirm=t" to bypass Google's 25MB virus scanner warning intercept page
-        return `https://google.com{match[1]}`;
+        return `https://google.com{match[1]}&confirm=t`;
     }
     return url;
 }
 
-// Handles saving, validating, and applying the background link
+// NEW: Processes the uploaded .txt file containing Base64 data
+function handleFileUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.type !== "text/plain" && !file.name.endsWith('.txt')) {
+        showBgMessage('Please upload a valid .txt file.', '#ff4d4d');
+        return;
+    }
+
+    showBgMessage('Reading Base64 file...', '#e67e22');
+
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+        let base64String = evt.target.result.trim();
+
+        // Automatically wrap raw base64 string with image header if missing
+        if (!base64String.startsWith('data:image')) {
+            base64String = `data:image/png;base64,${base64String}`;
+        }
+
+        const testImage = new Image();
+        testImage.src = base64String;
+
+        testImage.onload = function() {
+            try {
+                document.body.style.backgroundImage = `url('${base64String}')`;
+                localStorage.setItem('style_canvas', base64String); // Saved on its own
+                bgUrlInput.value = '';
+                bgFileInput.value = ''; 
+                showBgMessage('Base64 background applied!', '#2ecc71');
+                setTimeout(() => { bgMessage.textContent = ''; }, 4000);
+            } catch (error) {
+                showBgMessage('Storage failed. File exceeds browser 5MB limit.', '#ff4d4d');
+            }
+        };
+
+        testImage.onerror = function() {
+            showBgMessage('Invalid image data inside .txt file.', '#ff4d4d');
+        };
+    };
+
+    reader.readAsText(file);
+}
+
 function handleBgLink() {
     let urlString = bgUrlInput.value.trim();
     if (!urlString) {
-        bgMessage.style.color = '#ff4d4d';
-        bgMessage.textContent = 'Please enter a URL first.';
+        showBgMessage('Please enter a URL first.', '#ff4d4d');
         return;
     }
 
     urlString = convertDriveLink(urlString);
+    showBgMessage('Downloading background file... Please wait.', '#e67e22');
 
-    // Provide immediate feedback that a massive download is in progress
-    bgMessage.style.color = '#e67e22';
-    bgMessage.textContent = 'Downloading large background file... Please wait.';
-
-    // Fetch the image to track the loading state
     const loaderImage = new Image();
     loaderImage.src = urlString;
 
-    // This triggers ONLY when the browser has completely downloaded all 73MB
     loaderImage.onload = function() {
-        document.body.style.backgroundImage = `url('${urlString}')`;
-        localStorage.setItem('style_canvas', urlString);
-        bgUrlInput.value = ''; 
-        
-        bgMessage.style.color = '#2ecc71';
-        bgMessage.textContent = 'Large background rendered successfully!';
-        setTimeout(() => { bgMessage.textContent = ''; }, 4000);
+        try {
+            document.body.style.backgroundImage = `url('${urlString}')`;
+            localStorage.setItem('style_canvas', urlString);
+            bgUrlInput.value = ''; 
+            bgFileInput.value = '';
+            showBgMessage('Background rendered successfully!', '#2ecc71');
+            setTimeout(() => { bgMessage.textContent = ''; }, 4000);
+        } catch(e) {
+            showBgMessage('Storage failed. URL path is too long.', '#ff4d4d');
+        }
     };
 
-    // If the link breaks, is private, or fails to fetch
     loaderImage.onerror = function() {
-        bgMessage.style.color = '#ff4d4d';
-        bgMessage.textContent = 'Failed to load image. Ensure link is public or try a smaller image.';
+        showBgMessage('Failed to load image. Ensure link is public.', '#ff4d4d');
     };
+}
+
+function showBgMessage(text, color) {
+    bgMessage.style.color = color;
+    bgMessage.textContent = text;
 }
 
 function renderShortcuts() {
@@ -155,6 +197,7 @@ function resetDefaults() {
 customizerBtn.addEventListener('click', togglePanel);
 resetBtn.addEventListener('click', resetDefaults);
 saveBgBtn.addEventListener('click', handleBgLink);
+bgFileInput.addEventListener('change', handleFileUpload); // NEW
 addTileBtn.addEventListener('click', addShortcut);
 
 textColorPicker.addEventListener('change', (e) => updateTheme('text', e.target.value));
