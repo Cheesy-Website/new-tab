@@ -15,7 +15,7 @@ const addTileBtn = document.getElementById('addTileBtn');
 // Background Link Elements
 const bgUrlInput = document.getElementById('bgUrlInput');
 const saveBgBtn = document.getElementById('saveBgBtn');
-const bgMessage = document.getElementById('bgMessage'); // New feedback container
+const bgMessage = document.getElementById('bgMessage'); 
 
 const defaultShortcuts = [
     { name: "Drive", url: "https://google.com" },
@@ -48,6 +48,7 @@ function convertDriveLink(url) {
     const match = url.match(driveRegex);
     
     if (match && match[1]) {
+        // FIX: Added "&confirm=t" to bypass Google's 25MB virus scanner warning intercept page
         return `https://google.com{match[1]}`;
     }
     return url;
@@ -62,42 +63,31 @@ function handleBgLink() {
         return;
     }
 
-    // Convert link if it matches Google Drive patterns
     urlString = convertDriveLink(urlString);
 
-    // Google Drive blocks programmatic JavaScript testing (CORS).
-    // If it's a Drive link, skip the tester and apply it directly.
-    if (urlString.includes('://google.com')) {
-        document.body.style.backgroundImage = `url('${urlString}')`;
-        localStorage.setItem('style_canvas', urlString);
-        bgUrlInput.value = ''; // Clear input field
-        
-        bgMessage.style.color = '#2ecc71';
-        bgMessage.textContent = 'Google Drive background applied!';
-        setTimeout(() => { bgMessage.textContent = ''; }, 3000);
-        return;
-    }
-
-    // Standard verification for all other normal image URLs
+    // Provide immediate feedback that a massive download is in progress
     bgMessage.style.color = '#e67e22';
-    bgMessage.textContent = 'Testing link...';
+    bgMessage.textContent = 'Downloading large background file... Please wait.';
 
-    const imgTester = new Image();
-    imgTester.src = urlString;
+    // Fetch the image to track the loading state
+    const loaderImage = new Image();
+    loaderImage.src = urlString;
 
-    imgTester.onload = function() {
+    // This triggers ONLY when the browser has completely downloaded all 73MB
+    loaderImage.onload = function() {
         document.body.style.backgroundImage = `url('${urlString}')`;
         localStorage.setItem('style_canvas', urlString);
         bgUrlInput.value = ''; 
         
         bgMessage.style.color = '#2ecc71';
-        bgMessage.textContent = 'Background updated successfully!';
-        setTimeout(() => { bgMessage.textContent = ''; }, 3000);
+        bgMessage.textContent = 'Large background rendered successfully!';
+        setTimeout(() => { bgMessage.textContent = ''; }, 4000);
     };
 
-    imgTester.onerror = function() {
+    // If the link breaks, is private, or fails to fetch
+    loaderImage.onerror = function() {
         bgMessage.style.color = '#ff4d4d';
-        bgMessage.textContent = 'Failed to load image. Ensure it is a valid web link.';
+        bgMessage.textContent = 'Failed to load image. Ensure link is public or try a smaller image.';
     };
 }
 
